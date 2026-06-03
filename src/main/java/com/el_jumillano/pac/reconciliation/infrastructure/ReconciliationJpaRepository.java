@@ -12,7 +12,7 @@ public interface ReconciliationJpaRepository extends JpaRepository<Reconciliatio
     Optional<ReconciliationJpaEntity> findByRouteNumberAndPlantIdAndDate(
             Integer routeNumber, Long plantId, LocalDate date);
 
-    List<ReconciliationJpaEntity> findByPlantIdAndDate(Long plantId, LocalDate date);
+    List<ReconciliationJpaEntity> findByPlantIdAndDateOrderByRouteNumberAsc(Long plantId, LocalDate date);
 
     List<ReconciliationJpaEntity> findByStatusIn(List<ReconciliationStatus> statuses);
 }

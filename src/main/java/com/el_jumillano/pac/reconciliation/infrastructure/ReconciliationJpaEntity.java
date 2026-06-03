@@ -14,7 +14,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
     name = "reconciliations",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"plant_id", "route_number", "date"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"plant_id", "route_number", "date"}),
+    indexes = {
+        // Consulta principal: listar todos los repartos de una planta en una fecha
+        @Index(name = "idx_reconciliations_plant_date", columnList = "plant_id, date"),
+        // Scheduler findByStatusIn: busca todos los PENDING/READY en curso
+        @Index(name = "idx_reconciliations_status", columnList = "status")
+    }
 )
 @Data
 @Builder

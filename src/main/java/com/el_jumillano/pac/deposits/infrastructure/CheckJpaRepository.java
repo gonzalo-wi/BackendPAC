@@ -12,6 +12,17 @@ public interface CheckJpaRepository extends JpaRepository<CheckJpaEntity, Long> 
 
     List<CheckJpaEntity> findByDepositId(Long depositId);
 
+    @Query("""
+            SELECT c FROM CheckJpaEntity c
+            WHERE c.deposit.routeNumber = :routeNumber
+              AND c.deposit.plantId     = :plantId
+              AND c.deposit.depositDate = :date
+            """)
+    List<CheckJpaEntity> findByRouteAndPlantAndDate(
+            @Param("routeNumber") Integer routeNumber,
+            @Param("plantId")     Long plantId,
+            @Param("date")        LocalDate date);
+
     @Query("SELECT COALESCE(SUM(c.amount), 0) FROM CheckJpaEntity c WHERE c.deposit.id = :depositId")
     BigDecimal sumAmountByDepositId(@Param("depositId") Long depositId);
 

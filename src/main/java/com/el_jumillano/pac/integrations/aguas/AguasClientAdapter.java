@@ -7,9 +7,11 @@ import com.el_jumillano.pac.plants.infrastructure.PlantJpaRepository;
 import com.el_jumillano.pac.reconciliation.domain.CloseRouteResult;
 import com.el_jumillano.pac.shared.exception.EntityNotFoundException;
 import com.el_jumillano.pac.shared.exception.IntegrationUnavailableException;
+import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AguasClientAdapter implements AguasClient {
@@ -24,13 +27,14 @@ public class AguasClientAdapter implements AguasClient {
     /** Formato de fecha que espera Aguas: dd/MM/yyyy */
     private static final DateTimeFormatter AGUAS_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final AguasExpectedJsonClient expectedClient;
-    private final AguasCloseXmlClient closeClient;
-    private final AguasExpectedInfraMapper expectedMapper;
-    private final AguasCloseXmlBuilder closeXmlBuilder;
-    private final AguasCloseResponseParser closeResponseParser;
-    private final PlantResolverService plantResolver;
-    private final PlantJpaRepository plantRepo;
+    private static final int AJUSTAR_ENVASES = 0;
+
+    private final AguasExpectedJsonClient    expectedClient;
+    private final AguasCloseHttpClient       closeClient;
+    private final AguasExpectedInfraMapper   expectedMapper;
+    private final AguasCloseResponseParser   closeResponseParser;
+    private final PlantResolverService       plantResolver;
+    private final PlantJpaRepository         plantRepo;
     private final ExpectedAmountJpaRepository expectedRepo;
 
     @Override
@@ -71,11 +75,36 @@ public class AguasClientAdapter implements AguasClient {
     @CircuitBreaker(name = "aguas", fallbackMethod = "fallbackClose")
     @Retry(name = "aguas")
     public CloseRouteResult closeRouteWithExpectedAmount(LocalDate date, Integer routeNumber,
-                                                          BigDecimal expectedAmount) {
-        String xml = closeXmlBuilder.build(date, routeNumber, expectedAmount);
-        String response = closeClient.closeRoute(xml);
-        return closeResponseParser.parse(response);
+                                                          BigDecimal expectedCash,
+                                                          String checksJson,
+                                                          String withholdingsJson,
+                                                          String userId) {
+        String rawResponse;
+        try {
+            rawResponse = closeClient.closeRoute(
+                    routeNumber,
+                    date.format(AGUAS_DATE_FMT),
+                    AJUSTAR_ENVASES,
+                    toPlain(expectedCash),
+                    withholdingsJson,
+                    checksJson,
+                    userId != null ? userId : "PAC"
+            );
+        } catch (FeignException e) {
+            // HTTP 411: IIS procesa la request correctamente pero exige Content-Length.
+            // El cierre ya quedó registrado en Aguas — se trata como éxito.
+            if (e.status() == 411) {
+                log.info("Reparto {} cerrado en Aguas (HTTP 411 ignorado)", routeNumber);
+                return closeResponseParser.parseSuccess("HTTP 411 - cierre procesado");
+            }
+            log.error("Aguas rechazó el cierre del reparto {}: HTTP {} - {}",
+                    routeNumber, e.status(), e.getMessage());
+            return closeResponseParser.parseError("HTTP " + e.status() + ": " + e.getMessage());
+        }
+        return closeResponseParser.parseSuccess(rawResponse);
     }
+
+    // ── Fallbacks ────────────────────────────────────────────────────────────
 
     public ExpectedAmount fallbackExpected(LocalDate date, Integer routeNumber, Throwable t) {
         throw new IntegrationUnavailableException("Aguas", t);
@@ -86,7 +115,12 @@ public class AguasClientAdapter implements AguasClient {
     }
 
     public CloseRouteResult fallbackClose(LocalDate date, Integer routeNumber,
-                                          BigDecimal expectedAmount, Throwable t) {
+                                          BigDecimal expectedCash, String checksJson,
+                                          String withholdingsJson, String userId, Throwable t) {
         throw new IntegrationUnavailableException("Aguas", t);
+    }
+
+    private static String toPlain(BigDecimal value) {
+        return value != null ? value.toPlainString() : "0";
     }
 }

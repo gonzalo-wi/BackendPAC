@@ -6,19 +6,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class AguasCloseResponseParser {
 
-    public CloseRouteResult parse(String rawResponse) {
-        if (rawResponse == null || rawResponse.isBlank()) {
-            return CloseRouteResult.builder()
-                    .success(false)
-                    .rawResponse(rawResponse)
-                    .errorMessage("Respuesta vacía de Aguas.")
-                    .build();
-        }
-        boolean success = rawResponse.contains("<status>OK</status>");
+    /**
+     * Aguas devuelve HTTP 200 con body vacío en caso de éxito.
+     * Si el HTTP status no fue 200 Feign ya lanzó excepción antes de llegar acá.
+     */
+    public CloseRouteResult parseSuccess(String rawResponse) {
         return CloseRouteResult.builder()
-                .success(success)
+                .success(true)
                 .rawResponse(rawResponse)
-                .errorMessage(success ? null : "Aguas devolvió respuesta no OK: " + rawResponse)
+                .build();
+    }
+
+    public CloseRouteResult parseError(String errorMessage) {
+        return CloseRouteResult.builder()
+                .success(false)
+                .errorMessage(errorMessage)
                 .build();
     }
 }

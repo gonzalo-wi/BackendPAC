@@ -8,7 +8,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit_logs")
+@Table(
+    name = "audit_logs",
+    indexes = {
+        // Timeline de auditoría de una reconciliación o depósito específico
+        @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id"),
+        // Filtro por fecha en la vista de auditoría general
+        @Index(name = "idx_audit_created_at", columnList = "created_at")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor

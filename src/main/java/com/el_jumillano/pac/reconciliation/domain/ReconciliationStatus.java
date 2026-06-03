@@ -9,5 +9,6 @@ public enum ReconciliationStatus {
     PROCESSED_WITHOUT_DIFFERENCE,
     REQUIRES_REVIEW,
     INTEGRATION_ERROR,
+    QUEUED_FOR_CLOSE,
     CLOSED
 }

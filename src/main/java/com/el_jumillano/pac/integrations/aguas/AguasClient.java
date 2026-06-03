@@ -15,5 +15,7 @@ public interface AguasClient {
     /** Obtiene todos los repartos que ya tienen valor en Aguas para una fecha (idreparto=0). */
     List<ExpectedAmount> getAllExpectedByDate(LocalDate date);
 
-    CloseRouteResult closeRouteWithExpectedAmount(LocalDate date, Integer routeNumber, BigDecimal expectedAmount);
+    CloseRouteResult closeRouteWithExpectedAmount(LocalDate date, Integer routeNumber,
+            BigDecimal expectedCash, String checksJson, String withholdingsJson,
+            String userId);
 }

@@ -12,7 +12,13 @@ import java.time.LocalTime;
 @Entity
 @Table(
     name = "deposits",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"external_deposit_id", "cashier_id", "deposit_date"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"external_deposit_id", "cashier_id", "deposit_date"}),
+    indexes = {
+        // SUM de efectivo por reparto durante el process (query más frecuente del refresh)
+        @Index(name = "idx_deposits_route_plant_date", columnList = "route_number, plant_id, deposit_date"),
+        // Sync del scheduler: listar depósitos por cajero y fecha
+        @Index(name = "idx_deposits_cashier_date", columnList = "cashier_id, deposit_date")
+    }
 )
 @Data
 @Builder

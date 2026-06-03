@@ -12,6 +12,17 @@ public interface WithholdingJpaRepository extends JpaRepository<WithholdingJpaEn
 
     List<WithholdingJpaEntity> findByDepositId(Long depositId);
 
+    @Query("""
+            SELECT w FROM WithholdingJpaEntity w
+            WHERE w.deposit.routeNumber = :routeNumber
+              AND w.deposit.plantId     = :plantId
+              AND w.deposit.depositDate = :date
+            """)
+    List<WithholdingJpaEntity> findByRouteAndPlantAndDate(
+            @Param("routeNumber") Integer routeNumber,
+            @Param("plantId")     Long plantId,
+            @Param("date")        LocalDate date);
+
     @Query("SELECT COALESCE(SUM(w.amount), 0) FROM WithholdingJpaEntity w WHERE w.deposit.id = :depositId")
     BigDecimal sumAmountByDepositId(@Param("depositId") Long depositId);
 

@@ -2,20 +2,17 @@ package com.el_jumillano.pac.reconciliation.application;
 
 import com.el_jumillano.pac.audit.application.AuditService;
 import com.el_jumillano.pac.audit.domain.AuditAction;
-import com.el_jumillano.pac.integrations.aguas.AguasClient;
-import com.el_jumillano.pac.reconciliation.domain.CloseRouteResult;
 import com.el_jumillano.pac.reconciliation.domain.Reconciliation;
 import com.el_jumillano.pac.reconciliation.domain.ReconciliationStatus;
 import com.el_jumillano.pac.reconciliation.infrastructure.ReconciliationRepositoryAdapter;
+import com.el_jumillano.pac.reconciliation.infrastructure.messaging.RouteCloseMessage;
 import com.el_jumillano.pac.shared.exception.EntityNotFoundException;
-import com.el_jumillano.pac.shared.exception.IntegrationUnavailableException;
 import com.el_jumillano.pac.shared.exception.ReconciliationAlreadyProcessedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -31,7 +28,7 @@ public class CloseReconciliationUseCase {
     );
 
     private final ReconciliationRepositoryAdapter reconciliationRepository;
-    private final AguasClient aguasClient;
+    private final RouteClosePublisherPort routeClosePublisher;
     private final AuditService auditService;
 
     @Transactional
@@ -39,7 +36,8 @@ public class CloseReconciliationUseCase {
         Reconciliation rec = reconciliationRepository.findById(reconciliationId)
                 .orElseThrow(() -> new EntityNotFoundException("Reconciliation", reconciliationId));
 
-        if (rec.getStatus() == ReconciliationStatus.CLOSED) {
+        if (rec.getStatus() == ReconciliationStatus.CLOSED
+                || rec.getStatus() == ReconciliationStatus.QUEUED_FOR_CLOSE) {
             throw new ReconciliationAlreadyProcessedException(reconciliationId);
         }
 
@@ -48,37 +46,26 @@ public class CloseReconciliationUseCase {
                     "La reconciliación " + reconciliationId + " no está en un estado válido para cerrar (estado actual: " + rec.getStatus() + ")");
         }
 
-        CloseRouteResult closeResult;
-        try {
-            closeResult = aguasClient.closeRouteWithExpectedAmount(
-                    rec.getDate(), rec.getRouteNumber(), rec.getAguasExpectedTotal());
-        } catch (IntegrationUnavailableException e) {
-            log.error("Error cerrando reparto en Aguas: {}", e.getMessage());
-            rec.setStatus(ReconciliationStatus.INTEGRATION_ERROR);
-            auditService.log(AuditAction.AGUAS_ERROR, "Reconciliation",
-                    String.valueOf(reconciliationId), null, e.getMessage(), userId);
-            return reconciliationRepository.save(rec);
-        }
+        RouteCloseMessage message = RouteCloseMessage.builder()
+                .reconciliationId(reconciliationId)
+                .routeNumber(rec.getRouteNumber())
+                .plantId(rec.getPlantId())
+                .date(rec.getDate())
+                .expectedAmount(rec.getAguasExpectedTotal())
+                .userId(userId)
+                .build();
+
+        routeClosePublisher.publish(message);
 
         rec.setAguasSentAmount(rec.getAguasExpectedTotal());
-        rec.setAguasResponse(closeResult.getRawResponse());
+        rec.setStatus(ReconciliationStatus.QUEUED_FOR_CLOSE);
+        Reconciliation saved = reconciliationRepository.save(rec);
 
-        if (closeResult.isSuccess()) {
-            rec.setClosedAt(LocalDateTime.now());
-            rec.setStatus(ReconciliationStatus.CLOSED);
-            auditService.log(AuditAction.ROUTE_CLOSED, "Reconciliation",
-                    String.valueOf(reconciliationId), null,
-                    "reparto=" + rec.getRouteNumber() + " monto=" + rec.getAguasSentAmount(),
-                    userId);
-        } else {
-            log.warn("Aguas rechazó el cierre del reparto {}: {}", rec.getRouteNumber(), closeResult.getRawResponse());
-            rec.setStatus(ReconciliationStatus.INTEGRATION_ERROR);
-            auditService.log(AuditAction.AGUAS_ERROR, "Reconciliation",
-                    String.valueOf(reconciliationId), null,
-                    "Aguas rechazó el cierre: " + closeResult.getRawResponse(),
-                    userId);
-        }
+        auditService.log(AuditAction.ROUTE_PROCESSED, "Reconciliation",
+                String.valueOf(reconciliationId), null,
+                "Cierre encolado. reparto=" + rec.getRouteNumber() + " monto=" + rec.getAguasExpectedTotal(),
+                userId);
 
-        return reconciliationRepository.save(rec);
+        return saved;
     }
 }

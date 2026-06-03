@@ -33,7 +33,7 @@ public class ReconciliationRepositoryAdapter {
     }
 
     public List<Reconciliation> findByPlantAndDate(Long plantId, LocalDate date) {
-        return reconciliationJpaRepository.findByPlantIdAndDate(plantId, date)
+        return reconciliationJpaRepository.findByPlantIdAndDateOrderByRouteNumberAsc(plantId, date)
                 .stream().map(mapper::toDomain).toList();
     }
 

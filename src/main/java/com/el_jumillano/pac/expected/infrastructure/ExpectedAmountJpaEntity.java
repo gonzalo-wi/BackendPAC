@@ -10,7 +10,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
     name = "expected_amounts",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"route_number", "date", "plant_id", "version"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"route_number", "date", "plant_id", "version"}),
+    indexes = {
+        // findCurrent y markAllAsNotCurrent: la columna current no está en el unique constraint
+        @Index(name = "idx_expected_route_plant_date_current", columnList = "route_number, plant_id, date, current")
+    }
 )
 @Data
 @Builder
