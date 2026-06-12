@@ -23,6 +23,7 @@ public class GetDepositItemsUseCase {
         return itemRepository.findChecksByDepositId(depositId);
     }
 
+    
     public List<Withholding> getWithholdings(Long depositId) {
         depositRepository.findById(depositId)
                 .orElseThrow(() -> new EntityNotFoundException("Deposit", depositId));

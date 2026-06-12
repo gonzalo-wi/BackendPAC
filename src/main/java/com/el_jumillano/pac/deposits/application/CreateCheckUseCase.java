@@ -18,11 +18,9 @@ public class CreateCheckUseCase {
     public Check execute(Long depositId, CreateCheckRequest request) {
         depositRepository.findById(depositId)
                 .orElseThrow(() -> new EntityNotFoundException("Deposit", depositId));
-
         if (!ConceptoCatalog.isValidCheque(request.concepto())) {
             throw new IllegalArgumentException("Concepto inválido para cheque: " + request.concepto());
         }
-
         return itemRepository.saveCheck(Check.builder()
                 .depositId(depositId)
                 .concepto(request.concepto())

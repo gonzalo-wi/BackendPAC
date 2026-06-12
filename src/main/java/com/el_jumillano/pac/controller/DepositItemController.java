@@ -1,5 +1,4 @@
 package com.el_jumillano.pac.controller;
-
 import com.el_jumillano.pac.deposits.application.CheckResponse;
 import com.el_jumillano.pac.deposits.application.CreateCheckRequest;
 import com.el_jumillano.pac.deposits.application.CreateCheckUseCase;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @Tag(name = "Deposit Items")
@@ -33,9 +31,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DepositItemController {
 
-    private final CreateCheckUseCase createCheckUseCase;
+    private final CreateCheckUseCase       createCheckUseCase;
     private final CreateWithholdingUseCase createWithholdingUseCase;
-    private final GetDepositItemsUseCase getItemsUseCase;
+    private final GetDepositItemsUseCase   getItemsUseCase;
     private final DeleteDepositItemUseCase deleteItemUseCase;
 
     @GetMapping("/conceptos/checks")

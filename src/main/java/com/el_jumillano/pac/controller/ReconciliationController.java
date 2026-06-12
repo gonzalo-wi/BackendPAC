@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -54,6 +53,7 @@ public class ReconciliationController {
                 .body(reconciliationMapper.toResponse(createUseCase.execute(request.routeNumber(), request.date(), userId)));
     }
 
+
     @GetMapping
     public List<ReconciliationResponse> list(
             @RequestParam Long plantId,
@@ -62,10 +62,12 @@ public class ReconciliationController {
                 .stream().map(reconciliationMapper::toResponse).toList();
     }
 
+
     @GetMapping("/{id}")
     public ReconciliationResponse getById(@PathVariable Long id) {
         return reconciliationMapper.toResponse(getUseCase.getById(id));
     }
+
 
     @PostMapping("/{id}/manual-values")
     public ReconciliationResponse loadManualValues(
@@ -75,6 +77,7 @@ public class ReconciliationController {
         return reconciliationMapper.toResponse(manualValuesUseCase.execute(id, request, userId));
     }
 
+
     @PostMapping("/{id}/process")
     public ResponseEntity<ReconciliationResponse> process(
             @PathVariable Long id,
@@ -82,16 +85,19 @@ public class ReconciliationController {
         return ResponseEntity.ok(reconciliationMapper.toResponse(processUseCase.execute(id, userId)));
     }
 
+
     @GetMapping("/{id}/deposits")
     public List<Deposit> deposits(@PathVariable Long id) {
         return depositsUseCase.execute(id);
     }
+
 
     @GetMapping("/{id}/aguas-detail")
     public RouteDetailResponse aguasDetail(@PathVariable Long id) {
         return routeDetailUseCase.execute(id);
     }
 
+    
     @PostMapping("/{id}/close")
     public ResponseEntity<ReconciliationResponse> close(
             @PathVariable Long id,

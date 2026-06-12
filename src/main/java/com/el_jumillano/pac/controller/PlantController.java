@@ -43,6 +43,7 @@ public class PlantController {
                 .toList();
     }
 
+
     @PostMapping("/{plantId}/refresh")
     public List<ReconciliationResponse> refresh(
             @PathVariable Long plantId,
@@ -51,6 +52,7 @@ public class PlantController {
         return refreshUseCase.execute(plantId, date, userId)
                 .stream().map(reconciliationMapper::toResponse).toList();
     }
+
 
     @PostMapping("/{plantId}/process-all")
     public List<ReconciliationResponse> processAll(
@@ -61,6 +63,7 @@ public class PlantController {
                 .stream().map(reconciliationMapper::toResponse).toList();
     }
 
+
     @PostMapping("/{plantId}/close-all")
     public List<ReconciliationResponse> closeAll(
             @PathVariable Long plantId,
@@ -70,12 +73,14 @@ public class PlantController {
                 .stream().map(reconciliationMapper::toResponse).toList();
     }
 
+
     @GetMapping("/stats")
     public List<PlantStatsResponse> allStats(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return statsUseCase.getAllPlants(date);
     }
 
+    
     @GetMapping("/{plantId}/stats")
     public PlantStatsResponse stats(
             @PathVariable Long plantId,

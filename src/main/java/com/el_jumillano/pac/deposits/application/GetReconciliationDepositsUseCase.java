@@ -19,7 +19,6 @@ public class GetReconciliationDepositsUseCase {
     public List<Deposit> execute(Long reconciliationId) {
         var rec = reconciliationRepository.findById(reconciliationId)
                 .orElseThrow(() -> new EntityNotFoundException("Reconciliation", reconciliationId));
-
         return depositRepository.findByRouteAndPlantAndDate(
                 rec.getRouteNumber(), rec.getPlantId(), rec.getDate());
     }

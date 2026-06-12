@@ -1,5 +1,4 @@
 package com.el_jumillano.pac.controller;
-
 import com.el_jumillano.pac.deposits.application.AdjustDepositUseCase;
 import com.el_jumillano.pac.deposits.application.DepositAdjustmentRequest;
 import com.el_jumillano.pac.deposits.domain.DepositAdjustment;

@@ -18,11 +18,9 @@ public class CreateWithholdingUseCase {
     public Withholding execute(Long depositId, CreateWithholdingRequest request) {
         depositRepository.findById(depositId)
                 .orElseThrow(() -> new EntityNotFoundException("Deposit", depositId));
-
         if (!ConceptoCatalog.isValidRetencion(request.concepto())) {
             throw new IllegalArgumentException("Concepto inválido para retención: " + request.concepto());
         }
-
         return itemRepository.saveWithholding(Withholding.builder()
                 .depositId(depositId)
                 .concepto(request.concepto())

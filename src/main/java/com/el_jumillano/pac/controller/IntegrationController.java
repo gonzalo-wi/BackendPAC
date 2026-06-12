@@ -1,5 +1,4 @@
 package com.el_jumillano.pac.controller;
-
 import com.el_jumillano.pac.integrations.health.GetIntegrationStatusUseCase;
 import com.el_jumillano.pac.integrations.health.IntegrationStatus;
 import com.el_jumillano.pac.integrations.health.IntegrationStatusResponse;
@@ -8,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @Tag(name = "Integrations")

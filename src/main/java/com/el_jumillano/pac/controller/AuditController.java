@@ -1,5 +1,4 @@
 package com.el_jumillano.pac.controller;
-
 import com.el_jumillano.pac.audit.application.AuditLogResponse;
 import com.el_jumillano.pac.audit.application.AuditService;
 import com.el_jumillano.pac.audit.domain.AuditLog;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @Tag(name = "Audit")

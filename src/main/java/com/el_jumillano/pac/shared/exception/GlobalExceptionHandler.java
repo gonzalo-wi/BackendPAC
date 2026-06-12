@@ -1,5 +1,6 @@
 package com.el_jumillano.pac.shared.exception;
 
+import com.el_jumillano.pac.reports.infrastructure.pdf.ReportGenerationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return build(HttpStatus.BAD_REQUEST, details, req.getRequestURI());
+    }
+
+    @ExceptionHandler(ReportGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleReportGeneration(ReportGenerationException ex, HttpServletRequest req) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Error al generar el reporte PDF.", req.getRequestURI());
     }
 
     @ExceptionHandler(PacException.class)

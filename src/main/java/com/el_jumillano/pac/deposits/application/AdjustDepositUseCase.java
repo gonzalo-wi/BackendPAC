@@ -23,7 +23,6 @@ public class AdjustDepositUseCase {
     public DepositAdjustment execute(Long depositId, DepositAdjustmentRequest request, String userId) {
         Deposit original = depositRepository.findById(depositId)
                 .orElseThrow(() -> new EntityNotFoundException("Deposit", depositId));
-
         DepositAdjustment adjustment = DepositAdjustment.builder()
                 .originalDepositId(depositId)
                 .fromRouteNumber(original.getRouteNumber())
@@ -33,15 +32,12 @@ public class AdjustDepositUseCase {
                 .createdBy(userId)
                 .createdAt(LocalDateTime.now())
                 .build();
-
         DepositAdjustment saved = depositRepository.saveAdjustment(adjustment);
-
         auditService.log(AuditAction.DEPOSIT_ADJUSTED, "Deposit",
                 String.valueOf(depositId),
                 "reparto=" + original.getRouteNumber() + " monto=" + original.getAmount(),
                 "toReparto=" + request.toRouteNumber() + " monto=" + request.amount(),
                 userId);
-
         return saved;
     }
 }
